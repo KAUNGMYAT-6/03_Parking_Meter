@@ -1,0 +1,67 @@
+name: Unit Tests (Parking Meter)
+
+# ---------------------------------------------------------------------------
+# ENHANCEMENT: smarter triggers to avoid unnecessary / repeated test runs
+#
+# 1. Branch filter  - only pushes to main, and pull requests targeting main,
+#                     run the tests (not every push to every feature branch).
+# 2. Path filter    - runs only when Python code, tests, test config or this
+#                     workflow change. Editing README / docs / PDFs = no run.
+# 3. Draft-PR skip  - draft PRs (work in progress, often many AI-assisted
+#                     commits) are skipped until marked "Ready for review".
+# 4. Concurrency    - if a new commit is pushed while a run for the same
+#                     branch/PR is still going, the old run is cancelled.
+# 5. Manual trigger - workflow_dispatch lets you run it on demand (demo day).
+# ---------------------------------------------------------------------------
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "**.py"
+      - "pytest.ini"
+      - "requirements.txt"
+      - ".github/workflows/run-tests.yml"
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
+    paths:
+      - "**.py"
+      - "pytest.ini"
+      - "requirements.txt"
+      - ".github/workflows/run-tests.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # Skip draft pull requests; always run for push / manual triggers
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pytest
+        run: pytest -v --junitxml=test-results.xml
+
+      - name: Upload test results
+        if: always()          # upload even when tests fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results
+          path: test-results.xml
