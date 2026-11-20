@@ -1,9 +1,5 @@
-# Unit tests for calculate_parking_fee() in parking_fee.py
-# Test IDs follow the Test Case Specification (PKM-FEE-TC-xxx)
-
 import pytest
 from parking_fee import calculate_parking_fee
-
 
 # Valid minutes: 200 cents for every started hour, 0 minutes is free
 @pytest.mark.parametrize(
