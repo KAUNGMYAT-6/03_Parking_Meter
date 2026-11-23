@@ -4,6 +4,6 @@ def calculate_parking_fee(minutes):
         raise TypeError("invalid argument type")
     
     if minutes < 0:
-        raise ValueError("argument outside permitted range")
+        raise ValueError("outside permitted range")
     
     return (minutes // 60) * 200
